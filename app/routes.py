@@ -27,7 +27,7 @@ def get_services():
 
   return jsonify({ 'services': services }), 200
 
-@app.route('/log')
+@app.route('/log', methods=['POST'])
 def log():
   data = request.json
   data['service_name'] = data['service_name'].replace('-', '_')
