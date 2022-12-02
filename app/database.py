@@ -1,5 +1,11 @@
 import sqlalchemy as db
 import app as App
+import warnings
+from sqlalchemy import exc as sa_exc
+
+from sqlalchemy.orm import sessionmaker
+
+from app.model import Log
 
 class Database:
   def __init__(self):
@@ -49,6 +55,27 @@ class Database:
       'level': log[1],
       'log_message': log[2],
     } for log in results]
+
+  def create_table_if_not_exists(self, service_name):
+    LogModel = self.get_log_model(service_name)
+    LogModel.__table__.create(bind=self.engine, checkfirst=True)
+
+  def insert(self, data):
+    LogModel = self.get_log_model(data['service_name'])
+    del data['service_name']
+    Session = sessionmaker(bind=self.engine)
+    with Session() as session:
+      session.add(LogModel(**data))
+      session.commit()
+  
+  def get_log_model(self, service_name):
+    with warnings.catch_warnings():
+      warnings.simplefilter('ignore', category=sa_exc.SAWarning)
+      class_name = f'Log_{service_name}'
+      Model = type(class_name, (Log,), {
+        '__tablename__': service_name
+      })
+    return Model
     
   def close(self):
     self.engine.dispose()

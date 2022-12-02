@@ -26,4 +26,16 @@ def get_services():
   db.close()
 
   return jsonify({ 'services': services }), 200
+
+@app.route('/log')
+def log():
+  data = request.json
+  data['service_name'] = data['service_name'].replace('-', '_')
+  db = Database()
+  db.connect()
+  db.create_table_if_not_exists(data['service_name'])
+  db.insert(data)
+  db.close()
+
+  return jsonify({ 'status': 'created' }), 201
   
